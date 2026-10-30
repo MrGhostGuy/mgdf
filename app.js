@@ -353,7 +353,115 @@
   // ---------- filter chips selection initial active already in CSS via first items; ensure state defaults match first values
   // cat first is ALL (categories[0]='ALL'), platform first ALL, access first 'ALL'. good.
 
+  // ---------- Controller / Gamepad support ----------
+  const padPill = document.getElementById('pad-pill');
+  const padCountEl = document.getElementById('pad-count');
+  const padTesterCount = document.getElementById('pad-tester-count');
+  const padTesterList = document.getElementById('pad-tester-list');
+  let pads = [];
+  let padFocusIndex = -1;
+  let padNavCooldown = 0;
+  let padPrevButtons = [];
+
+  function updatePads(){
+    pads = [];
+    try { const gp = navigator.getGamepads ? navigator.getGamepads() : []; for (const p of gp) if (p) pads.push(p); } catch(e){}
+    if (padCountEl) padCountEl.textContent = pads.length;
+    if (padPill) padPill.classList.toggle('active', pads.length>0);
+    if (padTesterCount) padTesterCount.textContent = pads.length;
+    if (padTesterList) {
+      if (pads.length===0) padTesterList.textContent = 'No controller detected. Press a button on the pad.';
+      else padTesterList.textContent = pads.map(p=>p.id + ' — ' + p.buttons.filter(b=>b.pressed).length + ' btns').join(' | ');
+    }
+  }
+  window.addEventListener('gamepadconnected', updatePads);
+  window.addEventListener('gamepaddisconnected', updatePads);
+
+  function visibleCards(){ return Array.from(document.querySelectorAll('#game-grid .card')); }
+
+  function movePadFocus(dx,dy){
+    const cards = visibleCards();
+    if (!cards.length) return;
+    const total = cards.length;
+    // estimate columns from grid
+    const first = cards[0].getBoundingClientRect();
+    const second = cards[1] ? cards[1].getBoundingClientRect() : null;
+    let cols = 1;
+    if (second && Math.abs(second.top - first.top) < 10) {
+      // find how many share top row
+      cols = cards.filter(c=>Math.abs(c.getBoundingClientRect().top-first.top)<10).length;
+      if (cols<1) cols=1;
+    }
+    if (padFocusIndex < 0) padFocusIndex = 0;
+    let idx = padFocusIndex;
+    const mod = (n,m)=>((n%m)+m)%m;
+    if (dx !== 0) idx = mod(idx + dx, total);
+    if (dy !== 0) idx = mod(idx + dy*cols, total);
+    padFocusIndex = idx;
+    cards.forEach((c,i)=> c.classList.toggle('pad-focus', i===idx));
+    const el = cards[idx];
+    if (el) el.scrollIntoView({block:'nearest', behavior: reduceMotion?'auto':'smooth'});
+  }
+
+  function padActivate(idx, openInfo=false){
+    const cards = visibleCards();
+    if (idx<0 || idx>=cards.length) return;
+    const card = cards[idx];
+    const gid = card.dataset.id;
+    const game = MGDF_GAMES.find(g=>String(g.id)===String(gid));
+    if (!game) return;
+    if (openInfo) openModal(game);
+    else window.open(game.url,'_blank','noopener');
+  }
+
+  function pollGamepads(ts){
+    if (ts - padNavCooldown < 140) { requestAnimationFrame(pollGamepads); return; }
+    updatePads();
+    if (pads.length){
+      const p = pads[0];
+      // axes: 0 left stick X, 1 left stick Y
+      const ax = p.axes[0]||0, ay = p.axes[1]||0;
+      const btn = (i)=> (p.buttons[i] && p.buttons[i].pressed);
+      let moved=false;
+      if (ax < -0.55) { movePadFocus(-1,0); moved=true; }
+      else if (ax > 0.55) { movePadFocus(1,0); moved=true; }
+      if (ay < -0.55) { movePadFocus(0,-1); moved=true; }
+      else if (ay > 0.55) { movePadFocus(0,1); moved=true; }
+      // D-pad buttons (standard mapping)
+      if (btn(12)) { movePadFocus(0,-1); moved=true; } // up
+      if (btn(13)) { movePadFocus(0,1); moved=true; }  // down
+      if (btn(14)) { movePadFocus(-1,0); moved=true; } // left
+      if (btn(15)) { movePadFocus(1,0); moved=true; }  // right
+      // A (0) or X (2?) launch; cross mapping varies. 0 & 2 open game. 1 close modal/info? 
+      const prev = padPrevButtons[0] || [];
+      const rising = (i)=> btn(i) && !prev[i];
+      if (rising(0) || rising(2) || rising(9)) { // A / X / start
+        if (document.getElementById('modal').classList.contains('open')) closeModal();
+        else padActivate(padFocusIndex,false);
+      }
+      if (rising(1) || rising(3)) { // B / Y / triangle / circle -> info modal
+        const modalOpen = document.getElementById('modal').classList.contains('open');
+        if (modalOpen) closeModal();
+        else padActivate(padFocusIndex,true);
+      }
+      if (rising(8) || rising(9)) { /* select/start handled above */ }
+      if (rising(5) || rising(7)) { // bumpers -> next/prev category? scroll only
+      }
+      padPrevButtons[0] = p.buttons.map(b=>b.pressed);
+      if (moved) padNavCooldown = ts;
+    }
+    requestAnimationFrame(pollGamepads);
+  }
+  requestAnimationFrame(pollGamepads);
+
+  // reset pad focus when filters change / arsenal re-rendered
+  const _origRenderArsenal = renderArsenal;
+  renderArsenal = function(){ _origRenderArsenal(); padFocusIndex = -1; document.querySelectorAll('#game-grid .card').forEach(c=>c.classList.remove('pad-focus')); };
+
   // ---------- search modal activation on arsenal view if not ----------
   // done.
 
+  // initial pad read
+  updatePads();
 })();
+

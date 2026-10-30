@@ -50,6 +50,7 @@
     </nav>
     <div class="hud-right">
       <div class="status-pill"><span class="dot"></span> ONLINE</div>
+      <div class="pad-pill" id="pad-pill" title="Bluetooth/USB gamepads"><span class="pad-icon">PAD</span><span id="pad-count">0</span></div>
       <a class="gh-link" href="https://github.com/MrGhostGuy/mgdf" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository">GITHUB</a>
     </div>
   </header>
@@ -157,6 +158,21 @@
             <h3>SAFETY &amp; RIGHTS</h3>
             <p>Third-party destinations; rights and safety are not verified. Never install a launcher or extension a game site pushes. MGDF merely indexes public links.</p>
           </article>
+        </div>
+        <div class="panel">
+          <h3>CONTROLLER LAB</h3>
+          <p>MGDF uses the browser Gamepad API. Pair a Bluetooth or USB controller in your OS, then open this site; supported games can read inputs directly in their own tab.</p>
+          <ol style="margin:0 0 12px 18px;color:var(--text-dim);line-height:1.6">
+            <li>Put controller in pairing mode (hold PS/Xbox/menu button).</li>
+            <li>Pair in OS Bluetooth settings.</li>
+            <li>Press any button on the controller to wake the browser input.</li>
+            <li>Launch a game; many community ports read gamepads natively.</li>
+          </ol>
+          <div class="pad-tester" id="pad-tester">
+            <div class="pad-tester-head">CONNECTED PADS: <span id="pad-tester-count">0</span></div>
+            <div id="pad-tester-list" class="pad-tester-list">No controller detected. Press a button on the pad.</div>
+          </div>
+          <div class="pad-help">Hub navigation: D-pad/analog moves focus, A/X/Enter launches, B/ESC closes overlays.</div>
         </div>
         <div class="panel repo-panel">
           <h3>REPOSITORY</h3>
