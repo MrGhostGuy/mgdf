@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#05070d" />
+  <meta name="description" content="Mr. Ghost's Digital Frontier (MGDF) - a high-tech archive of community browser-ported AAA titles, playable in your browser." />
+  <title>Mr. Ghost's Digital Frontier — MGDF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Boot sequence -->
+  <div id="boot" class="boot" aria-live="polite" role="status">
+    <div class="boot-core">
+      <div class="reactor">
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+        <div class="core-glow"></div>
+      </div>
+      <h1 class="boot-title">MGDF</h1>
+      <p class="boot-sub">Mr. Ghost's Digital Frontier</p>
+      <div class="boot-bar"><div class="boot-fill" id="boot-fill"></div></div>
+      <div class="boot-log" id="boot-log">Initializing holographic core...</div>
+    </div>
+  </div>
+
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div id="scanlines" aria-hidden="true"></div>
+  <div id="cursor-glow" aria-hidden="true"></div>
+
+  <!-- HUD header -->
+  <header class="hud">
+    <div class="hud-left">
+      <a class="logo" href="#home" data-route="home">
+        <span class="logo-mark">MG</span>
+        <span class="logo-text">
+          <span class="logo-name">MR. GHOST</span>
+          <span class="logo-sub">DIGITAL FRONTIER</span>
+        </span>
+      </a>
+    </div>
+    <nav class="hud-nav" aria-label="Primary">
+      <a href="#home" data-route="home" class="nav-link active">COMMAND DECK</a>
+      <a href="#arsenal" data-route="arsenal" class="nav-link">ARSENAL</a>
+      <a href="#intel" data-route="intel" class="nav-link">INTEL</a>
+    </nav>
+    <div class="hud-right">
+      <div class="status-pill"><span class="dot"></span> ONLINE</div>
+      <a class="gh-link" href="https://github.com/MrGhostGuy/mgdf" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository">GITHUB</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HOME -->
+    <section id="view-home" class="view active" aria-label="Home">
+      <div class="hero">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div class="eyebrow">/// WELCOME TO THE FRONTIER ///</div>
+            <h1 class="hero-title">
+              <span class="glitch" data-text="MR. GHOST'S">MR. GHOST'S</span><br />
+              <span class="hero-accent">DIGITAL FRONTIER</span>
+            </h1>
+            <p class="hero-lead">
+              A holographic archive of <span class="hi" id="stat-total">0</span> community-ported AAA titles,
+              recompiled and reverse-engineered to run inside a single browser tab.
+              No launcher. No install. Just press play.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#arsenal" data-route="arsenal">
+                <span class="btn-sweep"></span>ENTER ARSENAL
+              </a>
+              <a class="btn btn-ghost" href="#intel" data-route="intel">READ INTEL</a>
+            </div>
+          </div>
+          <div class="hero-holo">
+            <div class="holo-frame">
+              <div class="holo-scan"></div>
+              <div class="holo-content">
+                <div class="holo-title">ARCADE DIRECTORY</div>
+                <div class="holo-stats">
+                  <div><span id="hs-total">0</span><small>TOTAL</small></div>
+                  <div><span id="hs-instant">0</span><small>INSTANT</small></div>
+                  <div><span id="hs-multi">0</span><small>MULTI</small></div>
+                  <div><span id="hs-files">0</span><small>FILES</small></div>
+                </div>
+                <div class="reactor-mini">
+                  <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="core-glow"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="section-head">
+        <h2>FEATURED LAUNCHES</h2>
+        <p>Hand-picked entries from the archive</p>
+      </div>
+      <div id="featured-grid" class="grid featured"></div>
+    </section>
+
+    <!-- ARSENAL -->
+    <section id="view-arsenal" class="view" aria-label="Arsenal">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="search" type="search" placeholder="Search titles, platforms, categories..." autocomplete="off" aria-label="Search games" />
+          <kbd class="kbd">/</kbd>
+        </div>
+        <div class="filter-row">
+          <div class="filter-group" id="cat-filters" role="group" aria-label="Category filters"></div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-group" id="plat-filters" role="group" aria-label="Platform filters"></div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-group" id="access-filters" role="group" aria-label="Access filters"></div>
+        </div>
+        <div class="results-bar">
+          <span id="results-count">0</span> of <span id="results-total">0</span> entries
+          <span class="sort-hint">sorted by archive order</span>
+        </div>
+      </div>
+      <div id="game-grid" class="grid" aria-live="polite"></div>
+      <div id="empty-state" class="empty" hidden>
+        <div class="empty-core">NO SIGNAL</div>
+        <p>No entries match your query. Adjust filters or search.</p>
+      </div>
+    </section>
+
+    <!-- INTEL -->
+    <section id="view-intel" class="view" aria-label="Intel">
+      <div class="intel">
+        <h2>INTEL BRIEFING</h2>
+        <div class="intel-grid">
+          <article class="panel">
+            <h3>MISSION</h3>
+            <p>Mr. Ghost's Digital Frontier (MGDF) consolidates the community's browser-ported and recompiled AAA titles into a single holographic interface. Every link routes to the original host maintained by its creator.</p>
+          </article>
+          <article class="panel">
+            <h3>ORIGIN</h3>
+            <p>Source directory: Browser Games Hub (browser.wix3.com), refreshed from the community-maintained <a href="https://github.com/SubmitGame/awesome-decomp-games" target="_blank" rel="noopener noreferrer">awesome-decomp-games</a> list. Credits to all reverse-engineers and port authors.</p>
+          </article>
+          <article class="panel">
+            <h3>LAUNCH PROTOCOLS</h3>
+            <ul>
+              <li><span class="tag instant">INSTANT</span> starts directly in your browser.</li>
+              <li><span class="tag files">FILES</span> requires game assets from a copy you own.</li>
+              <li><span class="tag multi">MULTI</span> supports multiplayer sessions.</li>
+            </ul>
+          </article>
+          <article class="panel">
+            <h3>SAFETY &amp; RIGHTS</h3>
+            <p>Third-party destinations; rights and safety are not verified. Never install a launcher or extension a game site pushes. MGDF merely indexes public links.</p>
+          </article>
+        </div>
+        <div class="panel repo-panel">
+          <h3>REPOSITORY</h3>
+          <p>Source code for this interface: <a href="https://github.com/MrGhostGuy/mgdf" target="_blank" rel="noopener noreferrer">github.com/MrGhostGuy/mgdf</a></p>
+          <div class="repo-line">
+            <span>SITE</span><span>MGDF v1.0</span>
+            <span>ENTRIES</span><span id="intel-total">0</span>
+            <span>LAST BUILD</span><span>OCT 30 2026</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>© 2026 Mr. Ghost's Digital Frontier — MGDF</div>
+    <div>Game names &amp; assets belong to their respective owners. Indexed links only.</div>
+  </footer>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card">
+      <button class="modal-close" data-close aria-label="Close">✕</button>
+      <div class="modal-cover">
+        <img id="modal-img" src="" alt="" />
+        <div class="modal-scan"></div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-kicker" id="modal-kicker"></div>
+        <h3 id="modal-title"></h3>
+        <div class="modal-meta" id="modal-meta"></div>
+        <div class="modal-badges" id="modal-badges"></div>
+        <p class="modal-desc" id="modal-desc"></p>
+        <div class="modal-actions">
+          <a id="modal-launch" class="btn btn-primary" href="#" target="_blank" rel="noopener noreferrer">
+            <span class="btn-sweep"></span>LAUNCH IN BROWSER
+          </a>
+          <button class="btn btn-ghost" data-close>CLOSE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
