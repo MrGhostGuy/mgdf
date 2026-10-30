@@ -59,9 +59,16 @@ body:hover #cursor-glow{opacity:1}
 .boot-log{margin-top:12px;font-family:"Share Tech Mono",monospace;color:var(--muted);font-size:.8rem;min-height:1.2em}
 
 /* HUD */
-.hud{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;
-  padding:12px 24px;background:rgba(5,7,13,.72);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+.hud{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:10px 16px;background:rgba(5,7,13,.78);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
   transform:translateY(-100%);animation:slide-down .8s .4s ease forwards}
+@media(max-width:640px){
+  .hud{justify-content:center}
+  .hud-left,.hud-right{justify-content:center}
+  .hud-nav{order:3;width:100%;justify-content:center}
+  .logo-text{text-align:center}
+  .status-pill,.pad-pill,.gh-link{font-size:.66rem;padding:5px 9px}
+}
 @keyframes slide-down{to{transform:translateY(0)}}
 .logo{display:flex;align-items:center;gap:12px;color:var(--text)}
 .logo-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:8px;
@@ -262,6 +269,26 @@ main{position:relative;z-index:4;max-width:1480px;margin:0 auto;padding:24px}
 .pad-tester-list{color:var(--muted);min-height:1.5em}
 .pad-help{margin-top:10px;color:var(--muted);font-size:.85rem}
 .card.pad-focus{outline:2px solid var(--cyan);outline-offset:-2px;box-shadow:0 0 0 2px rgba(77,234,255,.25),0 18px 40px rgba(0,0,0,.5);transform:translateY(-4px)}
+/* Mobile fine-tuning */
+@media(max-width:640px){
+  main{padding:16px}
+  .hero{padding:24px 0 10px}
+  .hero-title{font-size:clamp(1.7rem,8vw,2.6rem)}
+  .hero-actions{flex-direction:column}
+  .btn{width:100%;justify-content:center}
+  .toolbar{padding:14px}
+  .search-wrap{width:100%}
+  #search{font-size:.95rem;padding:11px 46px 11px 40px}
+  .filter-group{gap:6px}
+  .chip-btn{font-size:.62rem;padding:6px 11px}
+  .results-bar{font-size:.8rem}
+  .card{border-radius:12px}
+  .card-title{font-size:1rem}
+  .modal-card{border-radius:14px;max-height:92vh}
+  .modal-body{padding:16px}
+  .footer{font-size:.78rem}
+  #cursor-glow{display:none}
+}
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
