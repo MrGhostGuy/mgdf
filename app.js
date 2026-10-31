@@ -283,7 +283,7 @@
     const actions = document.createElement('div'); actions.className='card-actions';
     const lb = document.createElement('button'); lb.className='launch-mini'; lb.textContent='LAUNCH';
     if(g._invalid){ lb.disabled = true; lb.title = 'No launch URL available for this entry'; lb.classList.add('disabled'); }
-    lb.addEventListener('click',(ev)=>{ ev.stopPropagation(); if(g._invalid || !g.url) return; try { window.open(g.url,'_blank','noopener'); } catch(e){ console.warn('Launch failed', e); } });
+    lb.addEventListener('click',(ev)=>{ ev.stopPropagation(); if(g._invalid || !g.url) return; try { window.location.assign(g.url); } catch(e){ try { window.location.href = g.url; } catch(e2){ console.warn('Launch failed', e2); } } });
     const ib = document.createElement('button'); ib.className='info-mini'; ib.textContent='INFO';
     ib.addEventListener('click',(ev)=>{ ev.stopPropagation(); openModal(g); });
     actions.append(lb,ib);
@@ -487,7 +487,7 @@
     if (!game) return;
     if (game._invalid){ openModal(game); return; }
     if (openInfo) openModal(game);
-    else { try { window.open(game.url,'_blank','noopener'); } catch(e){ console.warn('Launch failed', e); } }
+    else { try { window.location.assign(game.url); } catch(e){ try { window.location.href = game.url; } catch(e2){ console.warn('Launch failed', e2); } } }
   }
 
   function pollGamepads(ts){
