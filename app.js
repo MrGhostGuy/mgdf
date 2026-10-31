@@ -33,7 +33,29 @@
   requestAnimationFrame(bootTick);
 
   // ---------- Data ----------
-  const GAMES = (typeof MGDF_GAMES !== 'undefined') ? MGDF_GAMES : [];
+  // Normalize incoming entries so a missing/malformed record can never break the UI.
+  function normalizeGame(g, idx){
+    if(!g || typeof g !== 'object') return null;
+    const title = (typeof g.title === 'string' && g.title.trim()) ? g.title.trim() : ('Untitled Entry ' + (g.id != null ? g.id : (idx+1)));
+    const url = (typeof g.url === 'string') ? g.url.trim() : '';
+    const img = (typeof g.img === 'string') ? g.img.trim() : '';
+    const statuses = Array.isArray(g.statuses) ? g.statuses.map(s=>String(s)) : [];
+    return {
+      id: (g.id != null) ? g.id : (idx+1),
+      title,
+      category: (typeof g.category === 'string' && g.category.trim()) ? g.category.trim() : 'UNCATEGORIZED',
+      platform: (typeof g.platform === 'string' && g.platform.trim()) ? g.platform.trim() : 'WEB',
+      instant: !!g.instant,
+      needsFiles: !!g.needsFiles,
+      multiplayer: !!g.multiplayer,
+      statuses,
+      url,
+      img,
+      _invalid: url === ''
+    };
+  }
+  const rawGames = (typeof MGDF_GAMES !== 'undefined' && Array.isArray(MGDF_GAMES)) ? MGDF_GAMES : [];
+  const GAMES = rawGames.map(normalizeGame).filter(Boolean);
   const total = GAMES.length;
   const instantCount = GAMES.filter(g=>g.instant).length;
   const multiCount = GAMES.filter(g=>g.multiplayer).length;
@@ -53,7 +75,8 @@
   const canvas = document.getElementById('bg-canvas');
   const ctx = canvas.getContext('2d');
   let W=0,H=0, nodes=[];
-  const NODES = reduceMotion ? 0 : 55;
+  const isCoarse = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  const NODES = (reduceMotion || isCoarse || window.innerWidth < 640) ? 0 : 40;
   const mouse = {x:-9999,y:-9999};
   function resize(){
     W = canvas.width = window.innerWidth;
@@ -167,14 +190,43 @@
   });
   // focus shortcut /
   document.addEventListener('keydown',(e)=>{
-    if(e.key==='/' && document.activeElement !== searchInput){
+    if(e.key==='/' && document.activeElement !== searchInput && !modal.classList.contains('open')){
       e.preventDefault();
       // ensure arsenal view
       if(currentRoute!=='arsenal') location.hash='#arsenal';
       setTimeout(()=>searchInput.focus(),50);
+      return;
     }
     if(e.key==='Escape'){
-      closeModal();
+      if(modal.classList.contains('open')) closeModal();
+      return;
+    }
+    // keyboard grid navigation
+    if(['ArrowRight','ArrowLeft','ArrowUp','ArrowDown'].indexOf(e.key) !== -1){
+      const active = document.activeElement;
+      if(active && active.classList && active.classList.contains('card')){
+        const gridEl = active.closest('.grid');
+        if(gridEl){
+          e.preventDefault();
+          const cards = Array.from(gridEl.querySelectorAll('.card'));
+          const idx = cards.indexOf(active);
+          if(idx < 0) return;
+          let cols = 1;
+          const firstTop = cards[0].getBoundingClientRect().top;
+          const colsCount = cards.filter(c=>Math.abs(c.getBoundingClientRect().top-firstTop)<10).length;
+          if(colsCount > 1) cols = colsCount;
+          let next = idx;
+          const max = cards.length - 1;
+          if(e.key==='ArrowRight') next = Math.min(max, next + 1);
+          else if(e.key==='ArrowLeft') next = Math.max(0, next - 1);
+          else if(e.key==='ArrowDown') next = Math.min(max, next + cols);
+          else if(e.key==='ArrowUp') next = Math.max(0, next - cols);
+          if(next !== idx){
+            cards[next].focus();
+            cards[next].scrollIntoView({block:'nearest', behavior: reduceMotion?'auto':'smooth'});
+          }
+        }
+      }
     }
   });
 
@@ -188,7 +240,10 @@
     if(filters.access==='instant' && !g.instant) return false;
     if(filters.access==='files' && !g.needsFiles) return false;
     if(filters.access==='multi' && !g.multiplayer) return false;
-    if(filters.query && !g.title.toLowerCase().includes(filters.query)) return false;
+    if(filters.query){
+      const haystack = (g.title + ' ' + g.category + ' ' + g.platform + ' ' + (g.statuses||[]).join(' ')).toLowerCase();
+      if(!haystack.includes(filters.query)) return false;
+    }
     return true;
   }
   function badgeClass(g){
@@ -205,8 +260,8 @@
     const cover = document.createElement('div');
     cover.className='card-cover';
     const img = document.createElement('img');
-    img.src = g.img; img.alt = g.title + ' cover'; img.loading='lazy'; img.decoding='async';
-    img.onerror = function(){ this.style.opacity='.25'; };
+    img.src = g.img || ''; img.alt = g.title + ' cover'; img.loading='lazy'; img.decoding='async';
+    img.onerror = function(){ this.style.opacity='.25'; this.removeAttribute('src'); this.alt = 'No cover available'; };
     const overlay = document.createElement('div'); overlay.className='cover-overlay';
     const em = document.createElement('span'); em.className='emblem'; em.textContent=initials(g.title);
     const catBadge = document.createElement('span'); catBadge.className='badge cat'; catBadge.textContent=g.category;
@@ -227,15 +282,16 @@
     meta.append(plat,st);
     const actions = document.createElement('div'); actions.className='card-actions';
     const lb = document.createElement('button'); lb.className='launch-mini'; lb.textContent='LAUNCH';
-    lb.addEventListener('click',(ev)=>{ ev.stopPropagation(); window.open(g.url,'_blank','noopener'); });
+    if(g._invalid){ lb.disabled = true; lb.title = 'No launch URL available for this entry'; lb.classList.add('disabled'); }
+    lb.addEventListener('click',(ev)=>{ ev.stopPropagation(); if(g._invalid || !g.url) return; try { window.open(g.url,'_blank','noopener'); } catch(e){ console.warn('Launch failed', e); } });
     const ib = document.createElement('button'); ib.className='info-mini'; ib.textContent='INFO';
     ib.addEventListener('click',(ev)=>{ ev.stopPropagation(); openModal(g); });
     actions.append(lb,ib);
     body.append(title,meta,actions);
     art.append(cover,body);
 
-    // tilt
-    if(!reduceMotion){
+    // tilt (pointer devices only, avoids sticky transforms on touch)
+    if(!reduceMotion && window.matchMedia('(hover: hover) and (pointer: fine)').matches){
       art.addEventListener('mousemove',(ev)=>{
         const r=art.getBoundingClientRect();
         const x=(ev.clientX-r.left)/r.width - .5;
@@ -292,8 +348,11 @@
   const modalBadges = document.getElementById('modal-badges');
   const modalDesc = document.getElementById('modal-desc');
   const modalLaunch = document.getElementById('modal-launch');
+  let lastFocusedElement = null;
   function openModal(g){
-    modalImg.src = g.img;
+    lastFocusedElement = document.activeElement;
+    modalImg.onerror = function(){ this.style.opacity='.25'; };
+    modalImg.src = g.img || '';
     modalImg.alt = g.title;
     modalTitle.textContent = g.title;
     modalKicker.textContent = g.category + ' · ' + g.platform;
@@ -303,16 +362,32 @@
       g.needsFiles?'<span class="chip files">NEEDS FILES</span>':'',
       g.multiplayer?'<span class="chip multi">MULTIPLAYER</span>':''
     ].join('');
-    modalDesc.textContent = 'Launches in a new tab on the original community host. Some projects require game files from a copy you own.';
-    modalLaunch.href = g.url;
+    modalDesc.textContent = g._invalid
+      ? 'This entry has no usable launch link. It is kept in the archive for reference only.'
+      : 'Launches in a new tab on the original community host. Some projects require game files from a copy you own.';
+    if(g._invalid || !g.url){
+      modalLaunch.removeAttribute('href');
+      modalLaunch.setAttribute('aria-disabled','true');
+      modalLaunch.classList.add('disabled');
+      modalLaunch.innerHTML = '<span class="btn-sweep"></span>NO LINK AVAILABLE';
+    } else {
+      modalLaunch.href = g.url;
+      modalLaunch.removeAttribute('aria-disabled');
+      modalLaunch.classList.remove('disabled');
+      modalLaunch.innerHTML = '<span class="btn-sweep"></span>LAUNCH IN BROWSER';
+    }
     modal.classList.add('open');
     modal.setAttribute('aria-hidden','false');
     document.body.style.overflow='hidden';
+    const closeBtn = modal.querySelector('.modal-close');
+    if(closeBtn) setTimeout(()=>closeBtn.focus(), 10);
   }
   function closeModal(){
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden','true');
     document.body.style.overflow='';
+    if(lastFocusedElement && document.contains(lastFocusedElement)){ try{ lastFocusedElement.focus(); }catch(e){} }
+    lastFocusedElement = null;
   }
   modal.addEventListener('click',(e)=>{ if(e.target.dataset.close!==undefined || e.target.classList.contains('modal-backdrop')) closeModal(); });
   document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeModal));
@@ -408,10 +483,11 @@
     if (idx<0 || idx>=cards.length) return;
     const card = cards[idx];
     const gid = card.dataset.id;
-    const game = MGDF_GAMES.find(g=>String(g.id)===String(gid));
+    const game = GAMES.find(g=>String(g.id)===String(gid));
     if (!game) return;
+    if (game._invalid){ openModal(game); return; }
     if (openInfo) openModal(game);
-    else window.open(game.url,'_blank','noopener');
+    else { try { window.open(game.url,'_blank','noopener'); } catch(e){ console.warn('Launch failed', e); } }
   }
 
   function pollGamepads(ts){

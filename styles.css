@@ -27,6 +27,7 @@ body{
 a{color:var(--cyan);text-decoration:none}
 img{max-width:100%;display:block}
 button{font-family:inherit}
+a,button{touch-action:manipulation}
 h1,h2,h3{font-family:"Orbitron",sans-serif;letter-spacing:.04em;margin:0}
 .kbd{font-family:"Share Tech Mono",monospace}
 
@@ -148,16 +149,18 @@ main{position:relative;z-index:4;max-width:1480px;margin:0 auto;padding:24px}
 .section-head p{color:var(--muted);margin:4px 0 0;font-size:.95rem}
 
 /* featured grid smaller */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
-.grid.featured{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:18px}
+.grid.featured{grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}
 
 /* Card */
 .card{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;
   background:linear-gradient(160deg,rgba(16,22,36,.85),rgba(8,12,22,.95));
   backdrop-filter:blur(6px);transform-style:preserve-3d;perspective:1000px;
   transition:transform .35s ease,box-shadow .35s ease,border-color .35s;
-  animation:card-in .6s ease backwards;cursor:pointer}
+  animation:card-in .6s ease backwards;cursor:pointer;
+  content-visibility:auto;contain-intrinsic-size:0 320px}
 .card:hover{border-color:var(--line-strong);box-shadow:0 18px 40px rgba(0,0,0,.5),0 0 30px rgba(77,234,255,.18)}
+.card:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(77,234,255,.25)}
 @keyframes card-in{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
 .card-cover{position:relative;aspect-ratio:16/9;overflow:hidden;background:#080c14}
 .card-cover img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease,filter .4s;filter:saturate(.85) contrast(1.05)}
@@ -186,6 +189,7 @@ main{position:relative;z-index:4;max-width:1480px;margin:0 auto;padding:24px}
 .launch-mini,.info-mini{flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:rgba(77,234,255,.05);
   color:var(--text);font-family:Orbitron;font-size:.7rem;letter-spacing:.14em;cursor:pointer;transition:.2s}
 .launch-mini:hover{background:var(--cyan);color:#00141a;border-color:var(--cyan);box-shadow:0 0 14px rgba(77,234,255,.4)}
+.launch-mini.disabled,.btn.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
 .info-mini:hover{border-color:var(--gold);color:var(--gold)}
 
 /* Toolbar */
@@ -288,6 +292,12 @@ main{position:relative;z-index:4;max-width:1480px;margin:0 auto;padding:24px}
   .modal-body{padding:16px}
   .footer{font-size:.78rem}
   #cursor-glow{display:none}
+}
+/* Touch devices: larger, finger-friendly targets */
+@media (hover: none) and (pointer: coarse){
+  .launch-mini,.info-mini,.chip-btn,.nav-link,.modal-close{min-height:44px;min-width:44px}
+  .btn{min-height:46px}
+  .card{cursor:default}
 }
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce){
